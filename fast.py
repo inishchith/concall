@@ -3,9 +3,13 @@ import speech_recognition as sr
 from tqdm import tqdm
 from multiprocessing.dummy import Pool
 import glob
+import pickle
+
+
 from wit import Wit
 import summarize_talk
-
+import analyze_tone
+import dist
 
 def transcribe(data):
     r = sr.Recognizer()
@@ -38,42 +42,56 @@ def convert():
     # convert everything at 
     curr = "./source/*.wav"
     files = glob.glob(curr)
-    print(files) 
-    
+     
+    file = open("hash.pickle","rb")
+    marked = dict() #pickle.load(file)
+    hash_list = dict()
     new_data = []
-
+    
     pool = Pool(8) # Number of concurrent threads
     for f in files:
-        print(f)
-        os.system("ffmpeg -i " + f[2:] +" -f segment -segment_time 30 -c copy parts/out%09d.wav")
+        if marked.get(f,-1) == -1:
+            marked[f] = 1
+            os.system("ffmpeg -i " + f[2:] +" -f segment -segment_time 30 -c copy parts/out%09d.wav")
 
-        files = os.listdir('parts/')
-        files = sorted(files)
+            files = os.listdir('parts/')
+            files = sorted(files)
 
-        path = "./transcript"  
-        all_text = pool.map(transcribe, enumerate(files))
-        pool.close()
-        pool.join()
+            path = "./transcript"  
+            all_text = pool.map(transcribe, enumerate(files))
+            pool.close()
+            pool.join()
 
-        transcript = ""
-        for t in sorted(all_text, key=lambda x: x['idx']):
-            total_seconds = t['idx'] * 30
+            transcript = ""
+
+            for t in sorted(all_text, key=lambda x: x['idx']):
+                total_seconds = t['idx'] * 30
         
-            m, s = divmod(total_seconds, 60)
-            h, m = divmod(m, 60)
+                m, s = divmod(total_seconds, 60)
+                h, m = divmod(m, 60)
         
-            transcript = transcript + t['text']
+                transcript = transcript + t['text']
 
-        # here filename should be a time_stamp of recording 
-        # summarize transcript here , change defaults max_sent 
+            # here filename should be a time_stamp of recording 
+            # summarize transcript here , change defaults max_sent 
         
-        title = "this is a placeholder"
-        #print(transcript)
-        summary = summarize_talk.summarize(title,transcript)
-        name = f
-        new_data.append([name,transcript])
-        print(get_data(title))
+            title = "this is a placeholder"
+            #print(transcript)
+            summary = summarize_talk.summarize(title,transcript)
+            name = f
+
+            speakers = dist.diagraph(f) 
+            tone_speaker0 = analyze_tone.analyze(speakers[0]) 
+            tone_speaker1 = analyze_tone.analyze(speakers[1])
+            new_data.append([transcript,tone_speaker0,tone_speaker1])
+            print(get_data(title))
     
+    os.system("rm -rf parts")
+    os.system("mkdir parts")
+
+    file.close()
+    file = open("hash.pickle","wb")
+    pickle.dump(marked,file)
     #print(new_data)
     return new_data
 
