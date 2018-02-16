@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "hellyeah-194718",
+  "private_key_id": "add-yours", 
+  "private_key": "add-yours", 
+  "client_email": "hellyeah@hellyeah-194718.iam.gserviceaccount.com",
+  "client_id": "add-yours",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://accounts.google.com/o/oauth2/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/hellyeah%40hellyeah-194718.iam.gserviceaccount.com"
+}
